@@ -1,0 +1,55 @@
+version: "3.7"
+
+volumes:
+  postgres-data:
+  minio-data:
+
+services:
+  db:
+    image: postgres:14
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  backend:
+    image: aquaculture-backend/backend
+    build:
+      context: ./backend
+      target: dev
+    restart: unless-stopped
+    command: sh -c "python manage.py migrate && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:7000 "
+    ports:
+      - 7000:7000
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/code
+      - ./backend/uploads:/uploads
+  
+  minio:
+    image: minio/minio:latest
+    ports:
+    - 9000:9000
+    - 9001:9001
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+
+  minio-client:
+    image: minio/mc:latest
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host rm expo;
+      /usr/bin/mc config host add --quiet --api s3v4 local http://minio:9000 minio minio123;
+      /usr/bin/mc mb --quiet local/aqua/;
+      /usr/bin/mc policy set public local/aqua;
+      "
+    depends_on:
+      - minio
