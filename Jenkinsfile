@@ -1,16 +1,21 @@
 pipeline {
-  agent any
-  stages {
-    stage("verify tooling") {
-      steps {
-        sh '''
-          docker version
-          docker info
-          docker compose version 
-          curl --version
-          jq --version
-        '''
-      }
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building..'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Testing..'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying....'
+            }
+        }
     }
-  }  
 }
