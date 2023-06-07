@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh 'sudo docker container ls'
+                sh 'docker container ls'
             }
         }
         stage('Test') {
